@@ -8,29 +8,30 @@ interface CreateUserFormProps {
 function CreateUserForm({ setUserWasCreated }: CreateUserFormProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; password?: string[] }>({});
 
-  const validatePassword = (password: string): string | null => {
-    if (password.length < 10) return 'Password must be at least 10 characters long';
-    if (password.length > 24) return 'Password must be at most 24 characters long';
-    if (password.includes(' ')) return 'Password cannot contain spaces';
-    if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
-    if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
-    if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
-    return null;
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
+    if (password.length < 10) errors.push('Password must be at least 10 characters long');
+    if (password.length > 24) errors.push('Password must be at most 24 characters long');
+    if (password.includes(' ')) errors.push('Password cannot contain spaces');
+    if (!/[0-9]/.test(password)) errors.push('Password must contain at least one number');
+    if (!/[A-Z]/.test(password)) errors.push('Password must contain at least one uppercase letter');
+    if (!/[a-z]/.test(password)) errors.push('Password must contain at least one lowercase letter');
+    return errors;
   };
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    const newErrors: { username?: string; password?: string } = {};
+    const newErrors: { username?: string; password?: string[] } = {};
     
     if (!username.trim()) {
       newErrors.username = 'Username is required';
     }
     
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      newErrors.password = passwordError;
+    const passwordErrors = validatePassword(password);
+    if (passwordErrors.length > 0) {
+      newErrors.password = passwordErrors;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -64,7 +65,13 @@ function CreateUserForm({ setUserWasCreated }: CreateUserFormProps) {
           onChange={(e) => setPassword(e.target.value)}
           aria-invalid={errors.password ? 'true' : 'false'}
         />
-        {errors.password && <span style={errorText}>{errors.password}</span>}
+        {errors.password && (
+          <ul style={errorList}>
+            {errors.password.map((err, index) => (
+              <li key={index} style={errorText}>{err}</li>
+            ))}
+          </ul>
+        )}
 
         <button style={formButton} type="submit">Create User</button>
       </form>
@@ -124,4 +131,10 @@ const errorText: CSSProperties = {
   color: 'red',
   fontSize: '12px',
   marginTop: '-4px',
+};
+
+const errorList: CSSProperties = {
+  color: 'red',
+  fontSize: '12px',
+  paddingLeft: '16px',
 };
