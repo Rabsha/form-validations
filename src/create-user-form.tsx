@@ -1,22 +1,72 @@
-import type { CSSProperties, Dispatch, SetStateAction } from 'react';
+import type { CSSProperties, Dispatch, SetStateAction, FormEvent } from 'react';
+import { useState } from 'react';
 
 interface CreateUserFormProps {
   setUserWasCreated: Dispatch<SetStateAction<boolean>>;
 }
 
-function CreateUserForm({}: CreateUserFormProps) {
+function CreateUserForm({ setUserWasCreated }: CreateUserFormProps) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+
+  const validatePassword = (password: string): string | null => {
+    if (password.length < 10) return 'Password must be at least 10 characters long';
+    if (password.length > 24) return 'Password must be at most 24 characters long';
+    if (password.includes(' ')) return 'Password cannot contain spaces';
+    if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
+    if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
+    if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
+    return null;
+  };
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const newErrors: { username?: string; password?: string } = {};
+    
+    if (!username.trim()) {
+      newErrors.username = 'Username is required';
+    }
+    
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      newErrors.password = passwordError;
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    setUserWasCreated(true);
+  };
+
   return (
     <div style={formWrapper}>
-      <form style={form}>
-        {/* make sure the username and password are submitted */}
-        {/* make sure the inputs have the accessible names of their labels */}
-        <label style={formLabel}>Username</label>
-        <input style={formInput} />
+      <form style={form} onSubmit={handleSubmit}>
+        <label style={formLabel} htmlFor="username">Username</label>
+        <input
+          style={formInput}
+          id="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          aria-invalid={errors.username ? 'true' : 'false'}
+        />
+        {errors.username && <span style={errorText}>{errors.username}</span>}
 
-        <label style={formLabel}>Password</label>
-        <input style={formInput} />
+        <label style={formLabel} htmlFor="password">Password</label>
+        <input
+          style={formInput}
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          aria-invalid={errors.password ? 'true' : 'false'}
+        />
+        {errors.password && <span style={errorText}>{errors.password}</span>}
 
-        <button style={formButton}>Create User</button>
+        <button style={formButton} type="submit">Create User</button>
       </form>
     </div>
   );
@@ -68,4 +118,10 @@ const formButton: CSSProperties = {
   marginTop: '8px',
   alignSelf: 'flex-end',
   cursor: 'pointer',
+};
+
+const errorText: CSSProperties = {
+  color: 'red',
+  fontSize: '12px',
+  marginTop: '-4px',
 };
